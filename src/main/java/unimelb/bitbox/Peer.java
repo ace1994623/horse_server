@@ -17,8 +17,8 @@ public class Peer
         Configuration.getConfiguration();
         
         new ServerMain();
-//        Thread comunicate = new Thread(() -> ServerMain.createServerSocket(Integer.parseInt(Configuration.getConfigurationValue("port"))));
-//        comunicate.start();
-        ServerMain.createServerSocket(Integer.parseInt(Configuration.getConfigurationValue("port")));
+        Thread comunicate = new Thread(() -> ServerMain.createServerSocket(Integer.parseInt(Configuration.getConfigurationValue("port"))));
+        comunicate.start();
+        //ServerMain.createServerSocket(Integer.parseInt(Configuration.getConfigurationValue("port")));
     }
 }

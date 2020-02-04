@@ -29,6 +29,7 @@ public class ServerMain implements FileSystemObserver {
 
 	@Override
 	public void processFileSystemEvent(FileSystemEvent fileSystemEvent) {
+		System.out.println("123123213213123123123");
 		//TODO: 分别针对个文件采用对应方法
 		switch (fileSystemEvent.pathName){
 			case "deeplabcut.csv":
@@ -140,7 +141,7 @@ public class ServerMain implements FileSystemObserver {
 
 				input = Document.parse(in);
 				String command = input.getString("command");
-				System.out.println(command + "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+				//System.out.println(command + "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 				switch (command) {
 					case "FILE_CREATE_REQUEST":
 						pathName = input.getString("pathName");
@@ -208,11 +209,6 @@ public class ServerMain implements FileSystemObserver {
 							if (status) {
 								ByteBuffer fileBuffer = Base64.getDecoder().decode(ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8)));
 								fileSystemManager.writeFile(pathName, fileBuffer, position);
-//								if (fileSystemManager.checkWriteComplete(pathName)) {
-//									log.info("Receive " + pathName + " successful.");
-//									fileSystemManager.cancelFileLoader(pathName);
-//									receiveComplete = true;
-//								} else {
 								if (position + length == fileSize){
 									fileSystemManager.checkWriteComplete(pathName);
 									log.info("Receive " + pathName + " successful.");
