@@ -6,11 +6,16 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.text.DecimalFormat;
 import java.util.Base64;
 import java.util.logging.Logger;
 
 import unimelb.bitbox.util.*;
 import unimelb.bitbox.util.FileSystemManager.FileSystemEvent;
+import weka.classifiers.Classifier;
+import weka.core.Instances;
+import weka.core.SerializationHelper;
+import weka.core.converters.CSVLoader;
 
 import javax.net.ServerSocketFactory;
 
@@ -33,13 +38,10 @@ public class ServerMain implements FileSystemObserver {
 		//TODO: 分别针对个文件采用对应方法
 		switch (fileSystemEvent.pathName){
 			case "deeplabcut.csv":
+				cleanCSV();
 				break;
 			case "result.csv":
-				useWeka();
-				break;
-			case "result.txt":
-				nextStep = true;
-				analyzeResult = "result";
+				useWeka("result.csv");
 				break;
 			}
 	}
@@ -86,17 +88,79 @@ public class ServerMain implements FileSystemObserver {
 	}
 
 	/**
+	 * use .py to cleandata the video
+	 */
+	static void cleanCSV(){
+		try {
+			//todo: 改成绝对路径
+			Runtime.getRuntime().exec("python3 /home/jiawenl/Desktop/clean_data.py argument");
+		}
+		catch (java.io.IOException e){
+			System.err.println ("IOException " + e.getMessage());
+		}
+	}
+
+	/**
 	 * use Weka to analyze the video
 	 */
-	static void useWeka(){
+	static void useWeka(String fileName){
+		try{
+			// 读取未标记数据集
+			File file = new File(fileName);
+			CSVLoader loader = new CSVLoader();
+			loader.setFile(file);
 
+			Instances unlabeledData = loader.getDataSet();
+			unlabeledData.setClassIndex(unlabeledData.numAttributes() - 1);
+
+
+			// 读取训练好的model
+			// todo: 更改model的绝对路径
+			Classifier trainedModel = (Classifier) SerializationHelper.read("model_path");
+
+			// 遍历每条记录
+			for(int numOfIndex =0; numOfIndex < unlabeledData.numInstances(); numOfIndex++ ){
+				// classify the unlabeled data
+				double[] percentage = trainedModel.distributionForInstance(unlabeledData.instance(numOfIndex));
+				double max = 0;
+				int index = 0;
+				// 保留两位小数
+				DecimalFormat df = new DecimalFormat("0.00");
+
+				for(int i = 0; i < percentage.length; i ++){
+					// 判断哪种可能性大，根据model中的几种label
+					if(percentage[i] > max){
+						max = percentage[i];
+						index = i;
+					}
+				}
+				// 根据不同的label输出不同的话
+				switch (index){
+					case 0:
+						analyzeResult = "It is lame, the accuracy is: " + df.format(percentage[index]);
+						break;
+					case 1:
+						analyzeResult = "It is sound, the accuracy is: " + df.format(percentage[index]);
+						break;
+				}
+				nextStep = true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
 	 * use Deeplabcut to analyze the video
 	 */
 	static void useDeepLabCut(){
-
+		try {
+			//todo: 改成绝对路径
+			Runtime.getRuntime().exec("/home/jiawenl/Desktop/useDeeplabcut");
+		}
+		catch (java.io.IOException e){
+			System.err.println ("IOException " + e.getMessage());
+		}
 	}
 
 	/**
@@ -141,7 +205,6 @@ public class ServerMain implements FileSystemObserver {
 
 				input = Document.parse(in);
 				String command = input.getString("command");
-				//System.out.println(command + "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 				switch (command) {
 					case "FILE_CREATE_REQUEST":
 						pathName = input.getString("pathName");
