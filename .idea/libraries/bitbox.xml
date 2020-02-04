@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="bitbox">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../S2/COMP90015_DS/assignment/BitBox2/classes/artifacts/bitbox_jar/bitbox.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../../S2/COMP90015_DS/assignment/BitBox2/classes/artifacts/bitbox_jar/bitbox.jar!/" />
+    </SOURCES>
+  </library>
+</component>
