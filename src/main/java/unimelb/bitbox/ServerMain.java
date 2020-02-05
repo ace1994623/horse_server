@@ -23,8 +23,7 @@ public class ServerMain implements FileSystemObserver {
 	private static Logger log = Logger.getLogger(ServerMain.class.getName());
 	protected static FileSystemManager fileSystemManager;
 	private static String videoName;
-	//TODO: 改share文件夹路径
-	static final File SHARE_DIRECTORY = new File("D:\\share");
+	static final File SHARE_DIRECTORY = new File("/home/ubuntu/Desktop/horse/share/");
 	private static boolean nextStep = false;
 	private static String analyzeResult;
 	
@@ -34,7 +33,6 @@ public class ServerMain implements FileSystemObserver {
 
 	@Override
 	public void processFileSystemEvent(FileSystemEvent fileSystemEvent) {
-		System.out.println("123123213213123123123");
 		//TODO: 分别针对个文件采用对应方法
 		switch (fileSystemEvent.pathName){
 			case "deeplabcut.csv":
