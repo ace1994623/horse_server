@@ -41,10 +41,11 @@ public class Protocols {
 	 *
 	 * @return json document
 	 */
-	public static Document protocolResult(String result) {
+	public static Document protocolResult(String result, boolean status) {
 		Document doc = new Document();
 		doc.append("command", "RESULT");
 		doc.append("message", result);
+		doc.append("status", status);
 		return doc;
 	}
 

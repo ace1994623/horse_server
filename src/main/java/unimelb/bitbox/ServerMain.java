@@ -33,8 +33,7 @@ public class ServerMain implements FileSystemObserver {
 
 	@Override
 	public void processFileSystemEvent(FileSystemEvent fileSystemEvent) {
-		//TODO: 分别针对个文件采用对应方法
-
+		log.info("new file create" + fileSystemEvent.pathName);
 		if(fileSystemEvent.pathName.contains("DLC_resnet50_horseFeb5shuffle1_1030000.csv"))
 		{
 			cleanCSV(fileSystemEvent.pathName);
@@ -65,14 +64,17 @@ public class ServerMain implements FileSystemObserver {
 
 				while(!nextStep){
 					try {
-						Thread.sleep(10);
+						Thread.sleep(1000);
+						Communication.inputRead(bufferIn);
+						log.info("receive heart");
+						bufferOut.write(Protocols.protocolResult(analyzeResult, false).toJson() + "\n");
 					} catch (InterruptedException e) {
 						log.info(e.getMessage());
 						Thread.currentThread().interrupt();
 					}
 				}
 				// send the result to client
-				bufferOut.write(Protocols.protocolResult(analyzeResult).toJson() + "\n");
+				bufferOut.write(Protocols.protocolResult(analyzeResult, true).toJson() + "\n");
 				bufferOut.flush();
 				// close the socket
 				client.close();
@@ -88,6 +90,7 @@ public class ServerMain implements FileSystemObserver {
 	 * use .py to cleandata the video
 	 */
 	static void cleanCSV(String fileName){
+		log.info("cleaning the " + fileName);
 		try {
 			Runtime.getRuntime().exec("python3 /home/ubuntu/Desktop/horse/simple_clean.py " + fileName);
 		}
@@ -100,6 +103,7 @@ public class ServerMain implements FileSystemObserver {
 	 * use Weka to analyze the video
 	 */
 	static void useWeka(String fileName){
+		log.info("use weka to analyze " + fileName );
 		try{
 			// 读取未标记数据集
 			File file = new File(fileName);
@@ -149,6 +153,7 @@ public class ServerMain implements FileSystemObserver {
 	 * use Deeplabcut to analyze the video
 	 */
 	static void useDeepLabCut(){
+		log.info("using deeplabcut to analyze video");
 		try {
 			Runtime.getRuntime().exec("/home/ubuntu/Desktop/horse/use_dlc");
 		}
@@ -161,8 +166,10 @@ public class ServerMain implements FileSystemObserver {
 	 * clean all the file in share directory
 	 */
 	static void cleanAllFile(File share){
+		log.warning("deleting all files");
 		for (File file : share.listFiles()){
 			if (file.isFile()) {
+				log.warning("deleting : " + file.getName());
 				file.delete();
 			} else if (file.isDirectory()) {
 				cleanAllFile(file);
