@@ -34,14 +34,13 @@ public class ServerMain implements FileSystemObserver {
 	@Override
 	public void processFileSystemEvent(FileSystemEvent fileSystemEvent) {
 		//TODO: 分别针对个文件采用对应方法
-		switch (fileSystemEvent.pathName){
-			case "deeplabcut.csv":
-				cleanCSV();
-				break;
-			case "result.csv":
-				useWeka("result.csv");
-				break;
-			}
+
+		if(fileSystemEvent.pathName.contains("DLC_resnet50_horseFeb5shuffle1_1030000.csv"))
+		{
+			cleanCSV(fileSystemEvent.pathName);
+		}else if(fileSystemEvent.pathName.contains("cleaned_")){
+			useWeka(fileSystemEvent.pathName);
+		}
 	}
 
 	/**
@@ -88,10 +87,9 @@ public class ServerMain implements FileSystemObserver {
 	/**
 	 * use .py to cleandata the video
 	 */
-	static void cleanCSV(){
+	static void cleanCSV(String fileName){
 		try {
-			//todo: 改成绝对路径
-			Runtime.getRuntime().exec("python3 /home/jiawenl/Desktop/clean_data.py argument");
+			Runtime.getRuntime().exec("python3 /home/ubuntu/Desktop/horse/simple_clean.py " + fileName);
 		}
 		catch (java.io.IOException e){
 			System.err.println ("IOException " + e.getMessage());
@@ -113,8 +111,7 @@ public class ServerMain implements FileSystemObserver {
 
 
 			// 读取训练好的model
-			// todo: 更改model的绝对路径
-			Classifier trainedModel = (Classifier) SerializationHelper.read("model_path");
+			Classifier trainedModel = (Classifier) SerializationHelper.read("/home/ubuntu/Desktop/horse/modelv1.0.model");
 
 			// 遍历每条记录
 			for(int numOfIndex =0; numOfIndex < unlabeledData.numInstances(); numOfIndex++ ){
@@ -153,8 +150,7 @@ public class ServerMain implements FileSystemObserver {
 	 */
 	static void useDeepLabCut(){
 		try {
-			//todo: 改成绝对路径
-			Runtime.getRuntime().exec("/home/jiawenl/Desktop/useDeeplabcut");
+			Runtime.getRuntime().exec("/home/ubuntu/Desktop/horse/use_dlc");
 		}
 		catch (java.io.IOException e){
 			System.err.println ("IOException " + e.getMessage());
