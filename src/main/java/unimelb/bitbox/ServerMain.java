@@ -23,6 +23,7 @@ public class ServerMain implements FileSystemObserver {
 	private static Logger log = Logger.getLogger(ServerMain.class.getName());
 	protected static FileSystemManager fileSystemManager;
 	private static String videoName;
+	static final String HORSE_DIRECTORY = Configuration.getConfigurationValue("horsePath");
 	static final File SHARE_DIRECTORY = new File("/home/ubuntu/Desktop/horse/share/");
 	private static boolean nextStep = false;
 	private static String analyzeResult;
@@ -34,11 +35,16 @@ public class ServerMain implements FileSystemObserver {
 	@Override
 	public void processFileSystemEvent(FileSystemEvent fileSystemEvent) {
 		log.info("new file create" + fileSystemEvent.pathName);
-		if(fileSystemEvent.pathName.contains("DLC_resnet50_horseFeb5shuffle1_1030000.csv"))
-		{
-			cleanCSV(fileSystemEvent.pathName);
-		}else if(fileSystemEvent.pathName.contains("cleaned_")){
-			useWeka(fileSystemEvent.pathName);
+		switch (fileSystemEvent.event){
+			case FILE_CREATE:
+				if(fileSystemEvent.pathName.contains("cleaned_")){
+					useWeka(fileSystemEvent.pathName);
+				}
+				else if(fileSystemEvent.pathName.contains("_1030000.csv"))
+				{
+					cleanCSV(fileSystemEvent.pathName);
+				}
+				break;
 		}
 	}
 
@@ -60,6 +66,15 @@ public class ServerMain implements FileSystemObserver {
 				log.info("One client is applying for connection.");
 				// receive a video from client
 				receiveVideo(client, bufferIn, bufferOut);
+				
+				try {
+					Thread.sleep(3000);
+
+				} catch (InterruptedException e) {
+					log.info(e.getMessage());
+					Thread.currentThread().interrupt();
+				}
+
 				useDeepLabCut();
 
 				while(!nextStep){
@@ -68,6 +83,7 @@ public class ServerMain implements FileSystemObserver {
 						Communication.inputRead(bufferIn);
 						log.info("receive heart");
 						bufferOut.write(Protocols.protocolResult(analyzeResult, false).toJson() + "\n");
+						bufferOut.flush();
 					} catch (InterruptedException e) {
 						log.info(e.getMessage());
 						Thread.currentThread().interrupt();
@@ -92,7 +108,9 @@ public class ServerMain implements FileSystemObserver {
 	static void cleanCSV(String fileName){
 		log.info("cleaning the " + fileName);
 		try {
-			Runtime.getRuntime().exec("python3 /home/ubuntu/Desktop/horse/simple_clean.py " + fileName);
+			//Runtime.getRuntime().exec();
+			Runtime.getRuntime().exec("python3 " + HORSE_DIRECTORY + "simple_clean.py " + HORSE_DIRECTORY + "share/" + fileName);
+
 		}
 		catch (java.io.IOException e){
 			System.err.println ("IOException " + e.getMessage());
@@ -106,7 +124,7 @@ public class ServerMain implements FileSystemObserver {
 		log.info("use weka to analyze " + fileName );
 		try{
 			// 读取未标记数据集
-			File file = new File(fileName);
+			File file = new File(HORSE_DIRECTORY + "share/" + fileName);
 			CSVLoader loader = new CSVLoader();
 			loader.setFile(file);
 
@@ -115,7 +133,7 @@ public class ServerMain implements FileSystemObserver {
 
 
 			// 读取训练好的model
-			Classifier trainedModel = (Classifier) SerializationHelper.read("/home/ubuntu/Desktop/horse/modelv1.0.model");
+			Classifier trainedModel = (Classifier) SerializationHelper.read(HORSE_DIRECTORY + "modelv1.0.model");
 
 			// 遍历每条记录
 			for(int numOfIndex =0; numOfIndex < unlabeledData.numInstances(); numOfIndex++ ){
@@ -128,6 +146,7 @@ public class ServerMain implements FileSystemObserver {
 
 				for(int i = 0; i < percentage.length; i ++){
 					// 判断哪种可能性大，根据model中的几种label
+					log.info("the possibility of index " + i + " is: " + percentage[i]);
 					if(percentage[i] > max){
 						max = percentage[i];
 						index = i;
@@ -155,7 +174,7 @@ public class ServerMain implements FileSystemObserver {
 	static void useDeepLabCut(){
 		log.info("using deeplabcut to analyze video");
 		try {
-			Runtime.getRuntime().exec("/home/ubuntu/Desktop/horse/use_dlc");
+			Runtime.getRuntime().exec(HORSE_DIRECTORY + "use_dlc");
 		}
 		catch (java.io.IOException e){
 			System.err.println ("IOException " + e.getMessage());
